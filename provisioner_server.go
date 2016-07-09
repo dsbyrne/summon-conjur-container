@@ -17,11 +17,11 @@ type ProvisionerServer struct {
   running bool
 }
 
-func (ps ProvisionerServer) initialize () {
+func (ps *ProvisionerServer) initialize () {
   ps.dispatch.RegisterHandler(MsgType_ConjurConnection, HandleConjurConnection)
 }
 
-func (ps ProvisionerServer) getInterfaceIP () (chosenAddr net.IP) {
+func (ps *ProvisionerServer) getInterfaceIP () (chosenAddr net.IP) {
   interfaces, err := net.Interfaces()
   if err != nil {
     panic(err)
@@ -56,7 +56,7 @@ func (ps ProvisionerServer) getInterfaceIP () (chosenAddr net.IP) {
   panic("Could not find an interface to listen on")
 }
 
-func (ps ProvisionerServer) Listen() {
+func (ps *ProvisionerServer) Listen() {
   if ps.running {
     return
   }
@@ -79,7 +79,7 @@ func (ps ProvisionerServer) Listen() {
   ps.waitForClose()
 }
 
-func (ps ProvisionerServer) requestConjur() {
+func (ps *ProvisionerServer) requestConjur() {
   msg := CreateMessage(MsgType_RequestCallback)
   msg.AddInt16(ps.port)
   msg.AddBytes([]byte(GetHostName()))
@@ -87,7 +87,7 @@ func (ps ProvisionerServer) requestConjur() {
   ps.broadcast(msg)
 }
 
-func (ps ProvisionerServer) Send(msg *Message) {
+func (ps *ProvisionerServer) Send(msg *Message) {
   if ps.socket == nil {
     panic("Not listening")
   }
@@ -95,7 +95,7 @@ func (ps ProvisionerServer) Send(msg *Message) {
   ps.socket.Write(msg.ToBytes())
 }
 
-func (ps ProvisionerServer) broadcast(msg *Message) {
+func (ps *ProvisionerServer) broadcast(msg *Message) {
   socket, err := net.DialUDP("udp4", nil, &net.UDPAddr{
     IP:   net.IPv4(255, 255, 255, 255),
     Port: broadcastPort,
@@ -113,7 +113,7 @@ func (ps ProvisionerServer) broadcast(msg *Message) {
   socket.Close()
 }
 
-func (ps ProvisionerServer) waitForClose()  {
+func (ps *ProvisionerServer) waitForClose()  {
   ps.running = true
 
   ps.requestConjur()
@@ -128,7 +128,7 @@ func (ps ProvisionerServer) waitForClose()  {
   }
 }
 
-func (ps ProvisionerServer) Close() {
+func (ps *ProvisionerServer) Close() {
   ps.running = false
 
   if ps.socket == nil {
@@ -139,7 +139,7 @@ func (ps ProvisionerServer) Close() {
   ps.socket = nil
 }
 
-func (ps ProvisionerServer) readSocket() {
+func (ps *ProvisionerServer) readSocket() {
   if ps.socket == nil {
     panic("Not listening")
   }
@@ -153,6 +153,6 @@ func (ps ProvisionerServer) readSocket() {
       panic("Failed to read")
     }
 
-    ps.dispatch.HandlePacket(&ps, buffer)
+    ps.dispatch.HandlePacket(ps, buffer)
   }
 }

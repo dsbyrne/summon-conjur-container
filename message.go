@@ -23,7 +23,7 @@ func CreateMessage(msgType MessageType) *Message {
 }
 
 func ParseMessage(data []byte) (message *Message, err error) {
-  buffer := new(bytes.Buffer)
+  buffer := bytes.NewReader(data)
 
   header := [4]byte {}
   err = binary.Read(buffer, binary.BigEndian, &header)
@@ -35,14 +35,15 @@ func ParseMessage(data []byte) (message *Message, err error) {
     return nil, &messageHeaderError{header}
   }
 
-  binary.Read(buffer, binary.BigEndian, message.Timestamp)
-  binary.Read(buffer, binary.BigEndian, message.Type)
-  binary.Read(buffer, binary.BigEndian, message.Data)
+  message = new(Message)
+  binary.Read(buffer, binary.BigEndian, &message.Timestamp)
+  binary.Read(buffer, binary.BigEndian, &message.Type)
+  binary.Read(buffer, binary.BigEndian, &message.Data)
 
   return message, nil
 }
 
-func (m Message) ToBytes() []byte {
+func (m *Message) ToBytes() []byte {
   buffer := bytes.NewBuffer(MessageHeader)
   
   binary.Write(buffer, binary.BigEndian, m.Timestamp)
@@ -52,22 +53,22 @@ func (m Message) ToBytes() []byte {
   return buffer.Bytes()
 }
 
-func (m Message) AddInt64(val uint64) {
+func (m *Message) AddInt64(val uint64) {
   binary.Write(m.Data, binary.BigEndian, val)
 }
 
-func (m Message) AddInt32(val uint32) {
+func (m *Message) AddInt32(val uint32) {
   binary.Write(m.Data, binary.BigEndian, val)
 }
 
-func (m Message) AddInt16(val uint16) {
+func (m *Message) AddInt16(val uint16) {
   binary.Write(m.Data, binary.BigEndian, val)
 }
 
-func (m Message) AddInt8(val uint8) {
+func (m *Message) AddInt8(val uint8) {
   binary.Write(m.Data, binary.BigEndian, val)
 }
 
-func (m Message) AddBytes(val []byte) {
+func (m *Message) AddBytes(val []byte) {
   binary.Write(m.Data, binary.BigEndian, val)
 }
